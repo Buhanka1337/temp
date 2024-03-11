@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chart.js</title>
+</head>
+<body>
+    <canvas id="myChart"></canvas>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.js"></script>
+    <script>
+        var ctx = document.getElementById('myChart').getContext('2d');
+        var chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: "Температура",
+                    backgroundColor: ['red', 'yellow', 'green'],
+                    borderColor: 'rgb(255, 99, 132)',
+                    data: [],
+                }]
+            },
+            options: {}
+        });
+    </script>
+</body>
+</html>

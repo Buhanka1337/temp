@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    
+    <title>Temperature Monitor with Polling</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <form id="timeForm">
+        <div>
+            <label for="selectedTime">Select Date and Time:</label>
+            <input type="datetime-local" id="selectedTime" name="selectedTime" required>
+            <button type="button" onclick="getTime()">Отправить</button>
+            <button type="button" onclick="tracking()">Следящий режим</button>
+        </div>
+    </form>
+    <form id="user">
+            <div>
+                <label for="names">Выберите имя:</label>
+                <select id="names" name="names">
+                    <option value=1 selected> Температура1</option>
+                    <option value=2>Температура2</option>
+                    <option value=3>Температура3</option>
+                    <option value=4>Температура4</option>
+                </select> <input type="button" value="Выбрать" onclick="getSelectedValue()">
+            </div>
+            <br>
+    </form>
+    <form id="selectCharts">
+        <div>
+            <label for="numbers">Выберите графики:</label>
+            <select id="numbers" name="numbers" multiple>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+            </select>
+            <button id="submitBtn">Отправить</button>
+        </div>
+    </form>
+    <form id="colorForm">
+        <label for="color1">T1:</label>
+        <input type="color" id="color1" name="color1">
+        <label for="color2">T2:</label>
+        <input type="color" id="color2" name="color2">
+        <label for="color3">T3:</label>
+        <input type="color" id="color3" name="color3">
+        <label for="color4">T4:</label>
+        <input type="color" id="color4" name="color4">
+        <label for="color5">T5:</label>
+        <input type="color" id="color5" name="color5">
+        <label for="color6">T6:</label>
+        <input type="color" id="color6" name="color6">
+        <label for="color7">T7:</label>
+        <input type="color" id="color7" name="color7">
+        <label for="color8">T8:</label>
+        <input type="color" id="color8" name="color8">
+        <label for="color9">T9:</label>
+        <input type="color" id="color9" name="color9">
+        <label for="color10">T10:</label>
+        <input type="color" id="color10" name="color10">
+        <input type="submit" value="Отправить">
+    </form>
+    <canvas id="temperatureChart" width="400" height="100"></canvas>
+    <script>
+        var trackingMode = 0
+        var selectedCharts = [2, 3, 4];
+        var Charts = [1,2,3,4,5,6,7]
+        var selectionScale = 100
+        var user = 1
+        var selectedTime
+        var colors = ['#b35b5b', '#af4141', '#2f7c9d', '#4245a9', '#a33e3e', '#000000', '#924545', '#956f6f', '#793434', '#7a3333'];
+            
+       document.getElementById('colorForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            for (var i = 1; i <= 10; i++) {
+                var colorInput = document.getElementById('color' + i);
+                colors[i-1]=(colorInput.value);
+                }
+            });
+         
+        document.getElementById('submitBtn').addEventListener('click', function (event) {
+            event.preventDefault();
+            var select = document.getElementById('numbers');
+            
+            selectedCharts = [];
+            for (var i = 0; i < select.options.length; i++) {
+                if (select.options[i].selected) {
+                    selectedCharts.push(parseInt(select.options[i].value))
+                        ;
+                }
+            }
+            
+           console.log(selectedCharts)
+           for (var i = 0; i < select.options.length; i++) {
+                 temperatureChart.data.datasets.splice(i-1,1)
+           }
+            setProps()
+            if (selectedCharts.length > 0) {
+                if (trackingMode == 0) {
+
+                    updateTemperatureData()
+
+                } else {
+                    submitTime()
+                }
+            }
+        })
+        
+        function getSelectedValue() {
+            var selectElement = document.getElementById("names");
+            user = selectElement.value;
+            getProps()
+           
+        }
+        function setProps() {
+            fetch('/api/setProps', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user, colors, selectedCharts })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Успешно отправлено:', data);
+                    
+                })
+                .catch(error => {
+                    console.error('Произошла ошибка:', error);
+                });
+        }
+        function getProps() {
+            fetch('/api/getProps', {
+                method: 'POST', 
+                headers: {
+                    'Content-Type': 'application/json', 
+                },
+                body: JSON.stringify({user})
+            })
+                .then(response => 
+                    response.json())
+                .then(data => {
+                    selectedCharts = (data[0].selectedcharts);
+                    colors = (data[0]).colors;
+                    for (var i = 0; i < selectedCharts.length; i++) {
+                        temperatureChart.data.datasets.splice(i - 1, 1)
+                    }
+                })
+                .catch(error => {
+                    console.error('Произошла ошибка:', error);
+                });
+        }
+ 
+
+        function getTime() {
+            console.log('fsfsfsdfsdfsd')
+            var selectedTimeInput = document.getElementById("selectedTime");
+            selectedTime = selectedTimeInput.value;
+            console.log(selectedTime)
+            submitTime()
+        }
+
+        function tracking() {
+            trackingMode = 0;
+        }
+
+        function submitTime() {
+            if (selectedTime != '') {
+                console.log(selectedTime)
+                fetch('/api/submitTime', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ selectedTime, selectedCharts , selectionScale}),
+                    
+                })
+                    .then(response => response.json())
+                    .then(data => {
+
+                        trackingMode = 1
+                        console.log(data)
+                        var dd = data[selectedCharts[0]].map(item => {
+                            const time = new Date(item.time);
+                            const hours = time.getHours().toString().padStart(2, '0'); 
+                            const minutes = time.getMinutes().toString().padStart(2, '0'); 
+                            const seconds = time.getSeconds().toString().padStart(2, '0'); 
+                            return `${hours}:${minutes}:${seconds}`;
+                        });
+                        
+                        temperatureChart.data.labels = dd
+                        var size = selectedCharts.length
+                        for (var i = 0; i < size; i++) {
+                            console.log(colors[i + 1])
+                            var values = data[selectedCharts[i]].map(item => item.value);
+                            var qqq = {
+                                label: 'Temperature' + selectedCharts[i],
+                                data: values,
+                                borderColor: colors[i],
+                                borderWidth: 2,
+                                fill: false
+                            }
+                            temperatureChart.data.datasets[i] = qqq
+                        }
+                        temperatureChart.update();
+
+                    })
+
+                    .catch((error) => {
+                        console.error('Ошибка:', error);
+                    });
+            }
+        }
+        const ctx = document.getElementById('temperatureChart').getContext('2d');
+
+        const temperatureChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [1, 2],
+
+            },
+            options: {
+
+
+            }
+        });
+
+        function updateTemperatureData() {
+            if (trackingMode == 0) {
+
+                fetch('/api/temperature', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ selectedCharts }),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        
+                        var ss = data.data
+                        temperatureChart.data.labels = (ss.map(item => item.split("T")[1].split(".")[0]))
+                        var size = selectedCharts.length
+                        for (var i = 0; i < size; i++) {
+                            
+                            
+                            var qqq = {
+                                label: 'Temperature' + selectedCharts[i],
+                                data: data[selectedCharts[i]],
+                                borderColor: colors[i],
+                                borderWidth: 2,
+                                fill: false
+                            }
+                            temperatureChart.data.datasets[i] = qqq
+                        }
+                        temperatureChart.update();
+                        console.log(temperatureChart.data.datasets)
+                    })
+                    .catch(error => console.error('Error fetching temperature data:', error));
+            }
+        }
+        setInterval(updateTemperatureData, 10000);
+        updateTemperatureData();
+    </script>
+
+</body>
+</html>

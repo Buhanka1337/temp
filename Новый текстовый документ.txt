@@ -1,0 +1,52 @@
+CREATE TABLE Passport (
+    passport_id integer PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(20) CHECK (type IN ('Аналоговый', 'Дискретный'))
+);
+
+CREATE TABLE AnalogParameters (
+    parameter_id SERIAL PRIMARY KEY,
+    passport_id integer, FOREIGN KEY (passport_id) REFERENCES Passport(passport_id),
+    time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    value FLOAT NOT NULL
+);
+
+CREATE TABLE app_users (
+    user_id SERIAL UNIQUE,
+    username VARCHAR(255) NOT NULL,
+    role_name VARCHAR(255) REFERENCES roles (role_name),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (username)
+);
+
+CREATE TABLE settings (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR (255) NOT NULL UNIQUE, FOREIGN KEY (username) REFERENCES app_users (username),
+    selectedcharts INT[],
+    colors INT[]
+);
+
+CREATE TABLE roles (
+    role_id SERIAL PRIMARY KEY,
+    role_name VARCHAR(255) UNIQUE NOT NULL
+);
+INSERT INTO Passport (passport_id, name, type)
+VALUES
+  (1, 'Temp1','Аналоговый'),
+  (2, 'Temp2','Аналоговый'),
+  (3, 'Temp3','Аналоговый'),
+  (4, 'Temp4','Аналоговый');
+
+  INSERT INTO app_users (username, role_name) VALUES ('Температура4', 'User');
+INSERT INTO app_users (username, role_name) VALUES ('Температура5', 'User');
+INSERT INTO app_users (username, role_name) VALUES ('Температура6', 'User');
+
+INSERT INTO settings (username, selectedcharts, colors)
+VALUES 
+('Температура4', ARRAY[1, 2, 5], ARRAY[16711680, 65280,255]),
+('Температура5', ARRAY[1, 5, 7], ARRAY[16776960, 16711935, 65535]),
+('Температура6', ARRAY[4, 5, 1], ARRAY[8421504, 16744256, 16711680]);
+
+INSERT INTO roles (role_id, role_name) VALUES (1, 'Admin');
+INSERT INTO roles (role_id, role_name) VALUES (2, 'User');
+INSERT INTO roles (role_id, role_name) VALUES (3, 'Manager');
